@@ -6,6 +6,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const BOT_TOKEN = "YOUR_BOT_TOKEN";
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
+// Replace with your Telegram User ID for admin access to /broadcast
+const ADMIN_ID = YOUR_TELEGRAM_USER_ID; // Example: 123456789
+
 /**
  * 🎉 Handles the /start command.
  */
@@ -112,5 +115,25 @@ function saveUserToken(chatId, token) {
   fs.writeFileSync('./src/database.json', JSON.stringify(dbData, null, 2));
 }
 
+/**
+ * 📢 Broadcast Message to All Users (Admin Only).
+ */
+bot.onText(/\/broadcast (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+
+  if (chatId !== ADMIN_ID) {
+    bot.sendMessage(chatId, "❌ *You are not authorized to use this command!*");
+    return;
+  }
+
+  const message = match[1];
+  const users = Object.keys(getDatabaseData());
+
+  users.forEach((userId) => {
+    bot.sendMessage(userId, 📢 *Broadcast Message:*\n\n${message}, { parse_mode: "Markdown" });
+  });
+
+  bot.sendMessage(chatId, "✅ *Broadcast sent successfully!*");
+});
+
 console.log("🚀 Bot is running...");
-}
