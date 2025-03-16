@@ -124,7 +124,8 @@ async function shortenUrl(chatId, url) {
   if (!adlinkflyToken) {
     bot.sendMessage(chatId, '⚠️ *Please set up your APNAURL API token first!* 🔑\nUse:\n/setapi YOUR_APNAURL_API_TOKEN', { parse_mode: 'Markdown' });
     return null;
-  }try {
+  }
+  try {
     const apiUrl = https://apnaurl.in/api?api=${adlinkflyToken}&url=${encodeURIComponent(url)};
     const response = await axios.get(apiUrl);
     return response.data.shortenedUrl;
