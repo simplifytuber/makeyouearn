@@ -24,13 +24,13 @@ const TelegramBot = require('node-telegram-bot-api');
    const chatId = msg.chat.id;
    const username = msg.from.username;
    const welcomeMessage = `😇 Hello, ${username}!\n\n`
-     + 'Welcome to the APNA URL Shortener Bot!\n'
-     + 'You can use this bot to shorten URLs using the apnaurl.in api service.\n\n'
+     + 'Welcome to the MAKEYOUEARN URL Shortener Bot!\n'
+     + 'You can use this bot to shorten URLs using the makeyouearn.in api service.\n\n'
      + 'To shorten a URL, just type or paste the URL directly in the chat, and the bot will provide you with the shortened URL.\n\n'
-     + 'If you haven\'t set your Apnaurl API token yet, use the command:\n/setapi YOUR_APNAURL_API_TOKEN\n\n'
-     + 'How To Use Me 👇👇 \n\n'
-   + '✅1. Got To https://apnaurl.in & Complete Your Registration.\n\n'
-   + '✅2. Then Copy Your API Key from here https://apnaurl.in/member/tools/api Copy Your API Only. \n\n'
+     + 'If you haven\'t set your Apnaurl API token yet, use the command:\n/setapi YOUR_MAKEYOUEARN_API_TOKEN\n\n'
+     + ' 🎯How To Use Me 👇👇 \n\n'
+   + '✅1. Got To https://makeyouearn.in & Complete Your Registration🌐.\n\n'
+   + '✅2. Then Copy Your API Key from here https://makeyouearn.in/member/tools/api Copy Your API Only. \n\n'
    + '✅3. Then add your API using command /setapi \n\n' 
    + 'Example: /setapi 7ac758689ab3932d4937888ebd5a37111011a944\n\n'
    + '⚠️ You must have to send link with https:// or http://\n\n'
@@ -48,8 +48,8 @@ const TelegramBot = require('node-telegram-bot-api');
    // Save the user's AdlinkFly API token to the database
    saveUserToken(chatId, userToken);
  
-   const response = `Your Indishort API token set successfully. ✅️✅️ Your token is: ${userToken}`;
-   const response = `Your APNAURL API token set successfully. ✅️✅️ Your token is: ${userToken}`;
+   const response = `Your MAKEYOUEARN API token set successfully. ✅️✅️ Your token is: ${userToken}`;
+   const response = `Your MAKEYOUEARN API token set successfully. ✅️✅️ Your token is: ${userToken}`;
    bot.sendMessage(chatId, response);
  });
  
@@ -123,12 +123,12 @@ const TelegramBot = require('node-telegram-bot-api');
    const adlinkflyToken = getUserToken(chatId);
  
    if (!adlinkflyToken) {
-     bot.sendMessage(chatId, 'Please set up 🎃 your APNAURL API token first. 🔮 Use the command: /setapi YOUR_APNAURL_API_TOKEN');
+     bot.sendMessage(chatId, 'Please set up 🎃 your MAKEYOUEARN API token first. 🔮 Use the command: /setapi YOUR_MAKEYOUEARN_API_TOKEN');
      return null;
    }
  
    try {
-     const apiUrl = `https://apnaurl.in/api?api=${adlinkflyToken}&url=${encodeURIComponent(url)}`;
+     const apiUrl = `https://makeyouearn.in/api?api=${adlinkflyToken}&url=${encodeURIComponent(url)}`;
      const response = await axios.get(apiUrl);
      return response.data.shortenedUrl;
    } catch (error) {
