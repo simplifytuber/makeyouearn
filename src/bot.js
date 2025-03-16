@@ -1,159 +1,116 @@
-const TelegramBot = require('node-telegram-bot-api');
-const axios = require('axios');
 const fs = require('fs');
-const express = require('express');
-const app = express();
+const axios = require('axios');
+const TelegramBot = require('node-telegram-bot-api');
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+// Replace with your actual bot token
+const BOT_TOKEN = "YOUR_BOT_TOKEN";
+const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-const port = 8080;
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
-
-// Retrieve the Telegram bot token from the environment variable
-const botToken = process.env.TELEGRAM_BOT_TOKEN;
-
-// Create the Telegram bot instance
-const bot = new TelegramBot(botToken, { polling: true });
-
-// Handle /start command
+/**
+ * 🎉 Handles the /start command.
+ */
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  const username = msg.from.username;
-  const welcomeMessage = `😇 Hello, ${username}!\n\n`
-    + 'Welcome to the APNA URL Shortener Bot!\n'
-    + 'You can use this bot to shorten URLs using the apnaurl.in api service.\n\n'
-    + 'To shorten a URL, just type or paste the URL directly in the chat, and the bot will provide you with the shortened URL.\n\n'
-    + 'If you haven\'t set your Apnaurl API token yet, use the command:\n/setapi YOUR_APNAURL_API_TOKEN\n\n'
-    + 'How To Use Me 👇👇 \n\n'
-  + '✅1. Got To https://apnaurl.in & Complete Your Registration.\n\n'
-  + '✅2. Then Copy Your API Key from here https://apnaurl.in/member/tools/api Copy Your API Only. \n\n'
-  + '✅3. Then add your API using command /setapi \n\n' 
-  + 'Example: /setapi 7ac758689ab3932d4937888ebd5a37111011a944\n\n'
-  + '⚠️ You must have to send link with https:// or http://\n\n'
-  + 'Made with ❤️ By: @apnaurl';
-  + '**Now, go ahead and try it out!**';
 
-  bot.sendMessage(chatId, welcomeMessage);
+  bot.sendMessage(
+    chatId,
+    😇 *Hello, ${msg.chat.first_name}!*\n\n +
+    🎉 *Welcome to the APNA URL Shortener Bot!* 🎉\n +
+    🔗 Easily shorten your URLs using *[APNAURL.in](https://apnaurl.in)* API service.\n\n +
+
+    ✨ *How to Use?* 👇\n +
+    ✅ 1. Visit [APNAURL.in](https://apnaurl.in) and register.\n +
+    ✅ 2. Copy your *API Key* from: [API Page](https://apnaurl.in/member/tools/api).\n +
+    ✅ 3. Set up your API using:\n\/setapi YOUR_API_KEY\\n\n +
+
+    📌 *Example:*\n\/setapi 7ac758689ab3932d4937888ebd5a37111011a944\\n\n +
+
+    ⚠️ *Important:* Your URLs must start with *https://* or *http://* for successful shortening.\n\n +
+
+    ❤️ *Made with love by:* [@ApnaURL](https://t.me/apnaurl_support),
+    {
+      parse_mode: "Markdown",
+      disable_web_page_preview: true
+    }
+  );
 });
 
-// Command: /setapi
-bot.onText(/\/setapi (.+)/, (msg, match) => {
-  const chatId = msg.chat.id;
-  const userToken = match[1].trim();
-
-  // Save the user's AdlinkFly API token to the database
-  saveUserToken(chatId, userToken);
-
-  const response = `Your APNAURL API token set successfully. ✅️✅️ Your token is: ${userToken}`;
-  bot.sendMessage(chatId, response);
-});
-
-// Listen for any message (not just commands)
+/**
+ * 📌 Shortens a single URL using the user's AdlinkFly API token.
+ */
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
+  const text = msg.text;
 
-  // Check if message contains text or forwarded content
-  if (msg.text || msg.caption) {
-    const text = msg.text || msg.caption;
-    const links = extractLinks(text);
+  // Ignore commands
+  if (text.startsWith('/')) return;
 
-    if (links.length > 0) {
-      const shortenedLinks = await shortenMultipleLinks(chatId, links);
-
-      // Replace original links in the text
-      const updatedText = replaceLinksInText(text, links, shortenedLinks);
-
-      bot.sendMessage(chatId, updatedText, {
-        reply_to_message_id: msg.message_id,
-      });
-    }
-  }
-
-  // If message has media with caption, handle it
-  if (msg.photo || msg.video || msg.document) {
-    const caption = msg.caption || '';
-    const links = extractLinks(caption);
-
-    if (links.length > 0) {
-      const shortenedLinks = await shortenMultipleLinks(chatId, links);
-
-      // Replace original links in the caption
-      const updatedCaption = replaceLinksInText(caption, links, shortenedLinks);
-
-      bot.sendMessage(chatId, updatedCaption, {
-        reply_to_message_id: msg.message_id,
-      });
-    }
-  }
-});
-
-// Function to extract URLs from a given text
-function extractLinks(text) {
-  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,})([^\s]*)/g;
-  const links = [...text.matchAll(urlRegex)].map(match => match[0]);
-  return links;
-}
-
-// Function to replace original links with shortened links in the text
-function replaceLinksInText(text, originalLinks, shortenedLinks) {
-  let updatedText = text;
-  originalLinks.forEach((link, index) => {
-    updatedText = updatedText.replace(link, shortenedLinks[index]);
-  });
-  return updatedText;
-}
-
-// Function to shorten multiple links
-async function shortenMultipleLinks(chatId, links) {
-  const shortenedLinks = [];
-  for (const link of links) {
-    const shortenedLink = await shortenUrl(chatId, link);
-    shortenedLinks.push(shortenedLink || link); // Use original link if shortening fails
-  }
-  return shortenedLinks;
-}
-
-// Function to shorten a single URL
-async function shortenUrl(chatId, url) {
+  // Retrieve user API token
   const adlinkflyToken = getUserToken(chatId);
 
   if (!adlinkflyToken) {
-    bot.sendMessage(chatId, 'Please set up 🎃 your APNAURL API token first. 🔮 Use the command: /setapi YOUR_APNAURL_API_TOKEN');
-    return null;
+    bot.sendMessage(
+      chatId,
+      ⚠️ *API Token Not Set!*\n\n +
+      🔑 Please set up your *APNAURL API token* first.\n\n +
+      🛠 Use the command:\n\/setapi YOUR_APNAURL_API_TOKEN\``
+    );
+    return;
   }
 
   try {
-    const apiUrl = `https://apnaurl.in/api?api=${adlinkflyToken}&url=${encodeURIComponent(url)}`;
+    const apiUrl = https://apnaurl.in/api?api=${adlinkflyToken}&url=${encodeURIComponent(text)};
     const response = await axios.get(apiUrl);
-    return response.data.shortenedUrl;
+
+    if (response.data.shortenedUrl) {
+      bot.sendMessage(chatId, 🔗 *Shortened URL:* ${response.data.shortenedUrl});
+    } else {
+      bot.sendMessage(chatId, ❌ *Error:* Unable to shorten the URL.);
+    }
   } catch (error) {
-    console.error('Shorten URL Error:', error);
-    return null;
+    console.error('🚨 Shorten URL Error:', error);
+    bot.sendMessage(chatId, ❌ *Error:* Something went wrong. Please try again later.);
+  }
+});
+
+/**
+ * 🗂 Saves the user's AdlinkFly API token.
+ */
+bot.onText(/\/setapi (.+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const token = match[1];
+
+  saveUserToken(chatId, token);
+  bot.sendMessage(chatId, ✅ *API Token Saved Successfully!*);
+});
+
+/**
+ * 🔍 Retrieves the stored API token for a user.
+ */
+function getUserToken(chatId) {
+  const dbData = getDatabaseData();
+  return dbData[chatId];
+}
+
+/**
+ * 📂 Reads and returns the database content.
+ */
+function getDatabaseData() {
+  try {
+    return JSON.parse(fs.readFileSync('./src/database.json', 'utf8'));
+  } catch (error) {
+    return {}; // Return an empty object if the file is missing or invalid
   }
 }
 
-// Function to save user's AdlinkFly API token
+/**
+ * 💾 Saves the user's API token in the database.
+ */
 function saveUserToken(chatId, token) {
   const dbData = getDatabaseData();
   dbData[chatId] = token;
   fs.writeFileSync('./src/database.json', JSON.stringify(dbData, null, 2));
 }
 
-// Function to retrieve user's AdlinkFly API token
-function getUserToken(chatId) {
-  const dbData = getDatabaseData();
-  return dbData[chatId];
-}
-
-// Function to read the database file
-function getDatabaseData() {
-  try {
-    return JSON.parse(fs.readFileSync('./src/database.json', 'utf8'));
-  } catch (error) {
-    return {};
-  }
+console.log("🚀 Bot is running...");
 }
